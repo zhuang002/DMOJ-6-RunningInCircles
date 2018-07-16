@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.Stack;
 
 /**
  *
@@ -22,7 +23,7 @@ public class RunningInCircles {
      */
     public static void main(String[] args) {
         // TODO code application logic here
-        for (int i=0;i<1;i++) {
+        for (int i=0;i<5;i++) {
             HashMap<Integer,Set<Integer>> graph=readGraph();
             int ringSize=findCircle(graph);
             System.out.println(ringSize);
@@ -30,31 +31,13 @@ public class RunningInCircles {
     }
     
     private static int findCircle(HashMap<Integer,Set<Integer>> graph) {
-        
-        
         HashMap<Integer,Integer> stepsForNodes=new HashMap();
-        Set<Integer> starts=new HashSet();
-        starts.add(firstNode);
-        stepsForNodes.put(firstNode,0);
-        int steps=1;
-        while (!starts.isEmpty()) {
-            Set<Integer> newStarts=new HashSet();
-            for (Integer start:starts) {
-                if (graph.containsKey(start)) {
-                    Set<Integer> ends=graph.get(start);
-                    for (Integer end:ends) {
-                        if (stepsForNodes.containsKey(end)) {
-                            return steps-stepsForNodes.get(end);
-                        }
-                        stepsForNodes.put(end, steps);
-                    }
-                    newStarts.addAll(ends);
-                }
-            }
-            steps++;
-            starts=newStarts;
-        }
-        return -1;
+        Stack<Integer> pathStack=new Stack();
+        
+        
+        stepsForNodes.put(firstNode, 0);
+        pathStack.push(firstNode);
+        return tracePathCircle(graph,pathStack,stepsForNodes,1);
     }
 
     private static HashMap<Integer,Set<Integer>> readGraph() {
@@ -67,10 +50,34 @@ public class RunningInCircles {
             if (hashMap.containsKey(start)) {
                 hashMap.get(start).add(end);
             } else {
-                hashMap.put(start, new HashSet<Integer>());
+                hashMap.put(start, new HashSet<>());
                 hashMap.get(start).add(end);
             }
         }
         return hashMap;
+    }
+
+    private static int tracePathCircle(HashMap<Integer,Set<Integer>> graph,
+            Stack<Integer> pathStack,HashMap<Integer,Integer> stepsForNodes,
+            Integer currentSteps) {
+        if (pathStack.isEmpty()) return -1;
+        int start=pathStack.peek();
+        if (graph.containsKey(start)) {
+            Set<Integer> ends=graph.get(start);
+            for (Integer end : ends) {
+                if (pathStack.contains(end)) {
+                    return currentSteps-stepsForNodes.get(end);
+                }
+                pathStack.push(end);
+                stepsForNodes.put(end,currentSteps);
+                int returnSteps=tracePathCircle(graph,pathStack,stepsForNodes,currentSteps+1);
+                if (returnSteps!=-1) {
+                    return returnSteps;
+                }
+            }
+        }
+        pathStack.pop();
+        stepsForNodes.remove(start);
+        return -1;
     }
 }
